@@ -1,10 +1,10 @@
 <?php
 
-namespace Solutionplus\MicroService\Models;
+namespace Otas\MicroService\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Solutionplus\MicroService\Traits\HasPackageFactory;
-use Solutionplus\MicroService\Traits\HasTimezoneFields;
+use Otas\MicroService\Traits\HasPackageFactory;
+use Otas\MicroService\Traits\HasTimezoneFields;
 
 class MicroServiceMap extends Model
 {

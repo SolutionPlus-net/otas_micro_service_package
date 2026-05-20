@@ -1,9 +1,9 @@
 <?php
 
-namespace Solutionplus\MicroService\Console\Commands;
+namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
-use Solutionplus\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Helpers\MsHttp;
 
 class MicroServiceEstablishCommand extends Command
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Solutionplus\MicroService\Helpers;
+namespace Otas\MicroService\Helpers;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;

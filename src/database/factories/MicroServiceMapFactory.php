@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Solutionplus\MicroService\Models\MicroServiceMap;
+use Otas\MicroService\Models\MicroServiceMap;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Invoice>

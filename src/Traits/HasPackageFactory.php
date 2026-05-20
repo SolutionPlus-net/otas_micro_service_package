@@ -1,6 +1,6 @@
 <?php
 
-namespace Solutionplus\MicroService\Traits;
+namespace Otas\MicroService\Traits;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

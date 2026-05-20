@@ -1,12 +1,12 @@
 <?php
 
-namespace Solutionplus\MicroService;
+namespace Otas\MicroService;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Solutionplus\MicroService\Console\Commands\MicroServiceInstallCommand;
-use Solutionplus\MicroService\Console\Commands\MicroServiceEstablishCommand;
+use Otas\MicroService\Console\Commands\MicroServiceInstallCommand;
+use Otas\MicroService\Console\Commands\MicroServiceEstablishCommand;
 
 class MicroServiceServiceProvider extends ServiceProvider
 {
@@ -65,8 +65,8 @@ class MicroServiceServiceProvider extends ServiceProvider
             ]);
 
             $this->app->make(Router::class)
-                ->aliasMiddleware('micro-service', \Solutionplus\MicroService\Http\Middleware\MicroServiceMiddleware::class)
-                ->aliasMiddleware('micro-service-establish-connection', \Solutionplus\MicroService\Http\Middleware\MicroServiceEstablishConnectionMiddleware::class);
+                ->aliasMiddleware('micro-service', \Otas\MicroService\Http\Middleware\MicroServiceMiddleware::class)
+                ->aliasMiddleware('micro-service-establish-connection', \Otas\MicroService\Http\Middleware\MicroServiceEstablishConnectionMiddleware::class);
         }
     }
 
@@ -80,7 +80,7 @@ class MicroServiceServiceProvider extends ServiceProvider
     protected function routeConfiguration()
     {
         return [
-            'namespace' => 'Solutionplus\MicroService\Http\Controllers',
+            'namespace' => 'Otas\MicroService\Http\Controllers',
         ];
     }
 

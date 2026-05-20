@@ -1,5 +1,5 @@
 {
-    "name": "solutionplus/microservice",
+    "name": "otas/microservice",
     "description": "a laravel package to deal with specific case of micro-services connection. So, it doesn't suit all needs or handle all connection cases",
     "type": "library",
     "license": "proprietary",
@@ -21,13 +21,13 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Solutionplus\\MicroService\\MicroServiceServiceProvider"
+                "Otas\\MicroService\\MicroServiceServiceProvider"
             ]
         }
     },
     "autoload": {
         "psr-4": {
-            "Solutionplus\\MicroService\\": "src/",
+            "Otas\\MicroService\\": "src/",
             "Database\\Factories\\": "src/database/factories/",
             "Database\\Seeders\\": "src/database/seeders/"
         }

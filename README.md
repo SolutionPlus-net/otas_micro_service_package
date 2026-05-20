@@ -1,6 +1,6 @@
-# Solutionplus/MicroService
+# Otas/MicroService
 
-solutionplus/microservice is a Laravel package for dealing with specific case of micro-services connection so, it doesn't suit all needs or handle all connection cases.
+otas/microservice is a Laravel package for dealing with specific case of micro-services connection so, it doesn't suit all needs or handle all connection cases.
 
 ## Table of Content
 [Installation](#Installation)
@@ -16,7 +16,7 @@ You can install the package using composer
 ```bash
 # cli commands
 
-composer require solutionplus/microservice
+composer require otas/microservice
 
 php artisan ms:install
 ```
@@ -85,8 +85,8 @@ The above methods are must to be used if you need to encrypt requests between mi
  */
 protected $routeMiddleware = [
     //
-    'micro-service' => \Solutionplus\MicroService\Http\Middleware\MicroServiceMiddleware::class,
-    'micro-service-establish-connection' => \Solutionplus\MicroService\Http\Middleware\MicroServiceEstablishConnectionMiddleware::class,
+    'micro-service' => \Otas\MicroService\Http\Middleware\MicroServiceMiddleware::class,
+    'micro-service-establish-connection' => \Otas\MicroService\Http\Middleware\MicroServiceEstablishConnectionMiddleware::class,
 ];
 ```
 
@@ -100,5 +100,5 @@ Using `micro-service` middleware on micro-services routes group is a must as it'
 
 ## License
 
-Solutionplus/MicroService package is limited and proprietary software belongs to Solutionplus.net company.
+Otas/MicroService package is limited and proprietary software belongs to Otas.net company.
 

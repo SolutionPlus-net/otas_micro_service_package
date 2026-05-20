@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Solutionplus\MicroService\Models\MicroServiceMap;
+use Otas\MicroService\Models\MicroServiceMap;
 
 class MicroServiceMapsTableSeeder extends Seeder
 {

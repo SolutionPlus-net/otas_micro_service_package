@@ -1,10 +1,10 @@
 <?php
 
-namespace Solutionplus\MicroService\Http\Middleware;
+namespace Otas\MicroService\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Solutionplus\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Helpers\MsHttp;
 
 class MicroServiceEstablishConnectionMiddleware
 {
