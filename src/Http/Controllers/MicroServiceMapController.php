@@ -1,10 +1,10 @@
 <?php
 
-namespace Solutionplus\MicroService\Http\Controllers;
+namespace Otas\MicroService\Http\Controllers;
 
 use Exception;
-use Solutionplus\MicroService\Http\Controllers\Controller;
-use Solutionplus\MicroService\Http\Requests\MicroServiceMapStoreRequest;
+use Otas\MicroService\Http\Controllers\Controller;
+use Otas\MicroService\Http\Requests\MicroServiceMapStoreRequest;
 
 class MicroServiceMapController extends Controller
 {
@@ -16,7 +16,7 @@ class MicroServiceMapController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  Solutionplus\MicroService\Http\Requests\RoleStoreRequest  $request
+     * @param  Otas\MicroService\Http\Requests\RoleStoreRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function store(MicroServiceMapStoreRequest $request)

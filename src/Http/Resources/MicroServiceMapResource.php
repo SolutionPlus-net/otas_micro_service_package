@@ -1,6 +1,6 @@
 <?php
 
-namespace Solutionplus\MicroService\Http\Resources;
+namespace Otas\MicroService\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 

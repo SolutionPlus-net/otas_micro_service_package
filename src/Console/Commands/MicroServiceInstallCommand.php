@@ -1,6 +1,6 @@
 <?php
 
-namespace Solutionplus\MicroService\Console\Commands;
+namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -82,7 +82,7 @@ class MicroServiceInstallCommand extends Command
     private function publishConfiguration()
     {
         $finishingMessage = 'MicroService configuration file is published';
-        $params = ['--provider' => 'Solutionplus\MicroService\MicroServiceServiceProvider'];
+        $params = ['--provider' => 'Otas\MicroService\MicroServiceServiceProvider'];
 
         if (File::exists(config_path('microservice.php'))) {
             if ($this->confirm('Config file already exists. Do you want to overwrite it?', false)) {

@@ -1,9 +1,9 @@
 <?php
 
-namespace Solutionplus\MicroService\Http\Requests;
+namespace Otas\MicroService\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Solutionplus\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Helpers\MsHttp;
 
 class MicroServiceMapStoreRequest extends FormRequest
 {

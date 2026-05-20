@@ -1,8 +1,8 @@
 <?php
 
-namespace Solutionplus\MicroService\Tests;
+namespace Otas\MicroService\Tests;
 
-use Solutionplus\MicroService\PermissionServiceProvider;
+use Otas\MicroService\PermissionServiceProvider;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {

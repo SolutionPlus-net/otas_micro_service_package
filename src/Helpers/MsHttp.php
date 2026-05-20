@@ -1,6 +1,6 @@
 <?php
 
-namespace Solutionplus\MicroService\Helpers;
+namespace Otas\MicroService\Helpers;
 
 use Closure;
 use Exception;
@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
-use Solutionplus\MicroService\Models\MicroServiceMap;
+use Otas\MicroService\Models\MicroServiceMap;
 
 class MsHttp
 {

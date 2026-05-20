@@ -1,8 +1,8 @@
 <?php
 
-namespace Solutionplus\MicroService\Traits;
+namespace Otas\MicroService\Traits;
 
-use Solutionplus\MicroService\Helpers\Tz;
+use Otas\MicroService\Helpers\Tz;
 
 Trait HasTimezoneFields
 {
