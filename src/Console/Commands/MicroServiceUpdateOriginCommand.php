@@ -3,7 +3,7 @@
 namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Services\MicroServiceMapService;
 
 class MicroServiceUpdateOriginCommand extends Command
 {
@@ -30,8 +30,8 @@ class MicroServiceUpdateOriginCommand extends Command
      */
     public function handle()
     {
-        $isUpdated = MsHttp::updateOrigin(
-            microserviceName: $this->argument('name'),
+        $isUpdated = MicroServiceMapService::updateOrigin(
+            name: $this->argument('name'),
             origin: $this->argument('origin'),
         );
 

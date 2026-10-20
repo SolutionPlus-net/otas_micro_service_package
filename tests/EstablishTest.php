@@ -34,7 +34,7 @@ class EstablishTest extends TestCase
         Http::fake([
             'tenant.test/api/micro-services' => function (Request $request) use (&$sentData, $tenantReceiveKeys) {
                 $sentData = RequestEncryption::decryptData(encryptedFields: $request->data(), key: self::PROJECT_SECRET);
-                $sentData['has_access_key_header'] = $request->hasHeader(MsHttp::ACCESS_KEY_HEADER);
+                $sentData['has_access_key_header'] = $request->hasHeader(RequestEncryption::ACCESS_KEY_HEADER);
 
                 return Http::response([
                     'message' => 'established',
@@ -54,6 +54,22 @@ class EstablishTest extends TestCase
 
         $this->assertSame($tenantReceiveKeys['secret_key'], $token->send_secret_key);
         $this->assertSame($tenantReceiveKeys['access_key'], $token->send_access_key);
+    }
+
+    public function test_establish_with_a_protocol_in_the_origin_saves_the_host_only(): void
+    {
+        Http::fake([
+            'tenant.test/api/micro-services' => Http::response([
+                'message' => 'established',
+                ...RequestEncryption::encrypt(data: $this->newKeys(), key: self::PROJECT_SECRET),
+            ]),
+        ]);
+
+        $this->assertTrue(MsHttp::establish(microserviceName: 'tenant', origin: 'https://tenant.test')->ok());
+
+        Http::assertSent(fn (Request $request) => $request->url() === 'http://tenant.test/api/micro-services');
+
+        $this->assertSame('tenant.test', MicroServiceMap::where('name', 'tenant')->first()->origin);
     }
 
     public function test_other_service_can_establish_a_connection(): void

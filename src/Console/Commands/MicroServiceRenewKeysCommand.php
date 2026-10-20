@@ -3,7 +3,7 @@
 namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Services\MicroServiceMapService;
 use Otas\MicroService\Jobs\RenewKeysJob;
 
 class MicroServiceRenewKeysCommand extends Command
@@ -29,7 +29,7 @@ class MicroServiceRenewKeysCommand extends Command
      */
     public function handle()
     {
-        $connectedServices = MsHttp::connectedServices();
+        $connectedServices = MicroServiceMapService::connectedServices();
 
         foreach ($connectedServices as $connectedService) {
             RenewKeysJob::dispatch($connectedService);

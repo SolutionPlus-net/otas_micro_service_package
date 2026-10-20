@@ -5,7 +5,7 @@ namespace Otas\MicroService\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Actions\DecodeRequestAction;
 
 class MicroServiceMiddleware
 {
@@ -20,7 +20,7 @@ class MicroServiceMiddleware
     {
         if (config('microservice.disable_package_middleware') && ! App::environment('production')) return $next($request);
 
-        if (! MsHttp::decodeRequest()) abort(405, 'forbidden action');
+        if (! DecodeRequestAction::handle()) abort(405, 'forbidden action');
 
         return $next($request);
     }

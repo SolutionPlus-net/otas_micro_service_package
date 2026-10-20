@@ -45,7 +45,7 @@ class SendingAndReceivingTest extends TestCase
 
         MsHttp::post(microserviceName: 'tenant', uri: 'test-send', data: ['amount' => 100]);
 
-        $this->assertSame($this->token->send_access_key, $sentRequest->header(MsHttp::ACCESS_KEY_HEADER)[0]);
+        $this->assertSame($this->token->send_access_key, $sentRequest->header(RequestEncryption::ACCESS_KEY_HEADER)[0]);
 
         $receivedData = RequestEncryption::decryptData(encryptedFields: $sentRequest->data(), key: $this->token->send_secret_key);
 
@@ -77,13 +77,13 @@ class SendingAndReceivingTest extends TestCase
         $fields = RequestEncryption::encrypt(data: ['amount' => 100], key: $this->token->receive_secret_current_key);
 
         foreach ([generate_key(), ''] as $wrongAccessKey) {
-            $this->withHeaders(['origin' => 'tenant.test', MsHttp::ACCESS_KEY_HEADER => $wrongAccessKey])
+            $this->withHeaders(['origin' => 'tenant.test', RequestEncryption::ACCESS_KEY_HEADER => $wrongAccessKey])
                 ->postJson('/api/test-receive', $fields)
                 ->assertStatus(405);
         }
 
         // Decrypting would have used up the nonce, so the same request is still accepted with the right access key.
-        $this->withHeaders(['origin' => 'tenant.test', MsHttp::ACCESS_KEY_HEADER => $this->token->receive_access_current_key])
+        $this->withHeaders(['origin' => 'tenant.test', RequestEncryption::ACCESS_KEY_HEADER => $this->token->receive_access_current_key])
             ->postJson('/api/test-receive', $fields)
             ->assertOk();
     }
@@ -101,7 +101,7 @@ class SendingAndReceivingTest extends TestCase
     {
         $fields = RequestEncryption::encrypt(data: ['amount' => 100], key: $secretKey);
 
-        return $this->withHeaders(['origin' => $origin, MsHttp::ACCESS_KEY_HEADER => $accessKey])
+        return $this->withHeaders(['origin' => $origin, RequestEncryption::ACCESS_KEY_HEADER => $accessKey])
             ->postJson('/api/test-receive', $fields);
     }
 }

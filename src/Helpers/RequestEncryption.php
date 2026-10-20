@@ -9,6 +9,8 @@ class RequestEncryption
 {
     const CIPHER = 'aes-256-gcm';
 
+    const ACCESS_KEY_HEADER = 'X-MS-Access-Key';
+
     const ENCRYPTED_FIELDS = [
         'ms_iv',
         'ms_tag',

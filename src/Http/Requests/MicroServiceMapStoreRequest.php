@@ -4,7 +4,7 @@ namespace Otas\MicroService\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Services\MicroServiceMapService;
 
 class MicroServiceMapStoreRequest extends FormRequest
 {
@@ -48,8 +48,8 @@ class MicroServiceMapStoreRequest extends FormRequest
             'access_key' => generate_key(),
         ];
 
-        MsHttp::saveMicroservice(
-            microserviceName: $this->name,
+        MicroServiceMapService::save(
+            name: $this->name,
             origin: $this->origin,
             receiveKeys: $receiveKeys,
             sendKeys: $this->only(['secret_key', 'access_key']),

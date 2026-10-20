@@ -92,7 +92,7 @@ class RenewKeysTest extends TestCase
             'access_key' => generate_key(),
         ];
 
-        $this->withHeaders(['origin' => 'tenant.test', MsHttp::ACCESS_KEY_HEADER => $token->receive_access_current_key])
+        $this->withHeaders(['origin' => 'tenant.test', RequestEncryption::ACCESS_KEY_HEADER => $token->receive_access_current_key])
             ->postJson('/api/micro-services/renew-keys', RequestEncryption::encrypt(data: $newKeys, key: $token->receive_secret_current_key))
             ->assertOk();
 
@@ -106,7 +106,7 @@ class RenewKeysTest extends TestCase
 
     public function test_renew_endpoint_rejects_a_request_without_valid_keys(): void
     {
-        $this->withHeaders(['origin' => 'tenant.test', MsHttp::ACCESS_KEY_HEADER => generate_key()])
+        $this->withHeaders(['origin' => 'tenant.test', RequestEncryption::ACCESS_KEY_HEADER => generate_key()])
             ->postJson('/api/micro-services/renew-keys', RequestEncryption::encrypt(data: [], key: generate_key()))
             ->assertStatus(405);
     }
