@@ -2,9 +2,7 @@
 
 namespace Otas\MicroService\Helpers;
 
-use Closure;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -32,16 +30,14 @@ class MsHttp
     protected static function destinationMicroService(string $microserviceName)
     {
         $microService = self::firstMsBy('name', $microserviceName);
-        switch (true) {
-            case (! $microService) :
-                abort(503, 'the service you try to communicate with is not exist yet in linked services list');
-            case (! $microService->origin) :
-                abort(503, 'can\'t find the selected service origin');
-            case ((! $microService->destination_key)) :
-                abort(503, 'can\'t find the selected service key');
-            default :
-                return $microService;
-        }
+
+        if (! $microService) abort(503, 'the service you try to communicate with is not exist yet in linked services list');
+
+        if (! $microService->origin) abort(503, 'can\'t find the selected service origin');
+
+        if (! $microService->destination_key) abort(503, 'can\'t find the selected service key');
+
+        return $microService;
     }
 
     protected function protocol()
@@ -94,12 +90,6 @@ class MsHttp
         );
     }
 
-    // ! need to revision as it has no request body to encode or decode
-    // public static function delete(string $microserviceName, string $uri)
-    // {
-    //     return self::send('delete', $microserviceName, $uri);
-    // }
-
     public static function establish(string $microserviceName, string $origin, int|null $localPort = null)
     {
         if (self::firstMsBy('name', $microserviceName)) abort(503, 'service name already exists');
@@ -146,30 +136,25 @@ class MsHttp
         return self::cache()?->where($columnName, $value)?->first() ?? self::cache(true)?->where($columnName, $value)?->first();
     }
 
-    public static function runOnConnection(Closure $closure, string $connectionName = '') {
-        $currentDatabaseConnection = MsHttp::currentDBConnection();
-        if (\in_array($connectionName, ['', config('database.default')])) return $closure();
-
-        MsHttp::setDBConnection($connectionName);
-        $resultOfClosure = $closure();
-        MsHttp::setDBConnection($currentDatabaseConnection);
-        return $resultOfClosure;
+    // Runs on the package connection without changing the app's default connection (e.g. a tenant database).
+    protected static function query()
+    {
+        return MicroServiceMap::on(config('microservice.db_connection_name') ?: null);
     }
 
     public static function saveMicroservice(string $microserviceName, string $origin, string $destinationKey)
     {
-        $microService = self::runOnConnection(function () use ($microserviceName, $origin, $destinationKey) {
-            return MicroServiceMap::updateOrCreate(
-                [
-                    'origin' => $origin,
-                    'name' => $microserviceName,
-                ],
-                [
-                    'display_name' => \ucfirst(\str_replace(['_', '-'], ' ', $microserviceName)),
-                    'destination_key' => $destinationKey,
-                ]
-            );
-        }, config('microservice.db_connection_name'));
+        $microService = self::query()->updateOrCreate(
+            [
+                'origin' => $origin,
+                'name' => $microserviceName,
+            ],
+            [
+                'display_name' => \ucfirst(\str_replace(['_', '-'], ' ', $microserviceName)),
+                'destination_key' => $destinationKey,
+            ]
+        );
+
         self::cache(true);
         return $microService;
     }
@@ -187,26 +172,23 @@ class MsHttp
 
     protected static function origin(bool $inbound = false, int|null $localPort = null)
     {
-        $origin = $inbound ? request()->header('origin') : request()->getSchemeAndHttpHost();
+        $origin = $inbound ? (string) request()->header('origin') : request()->getSchemeAndHttpHost();
+
+        $origin = \str_replace(['http://', 'https://'], '', $origin);
+
         if ($localPort && \in_array($origin, ['localhost', '127.0.0.1'])) {
             $origin = "{$origin}:{$localPort}";
         }
 
-        return \str_replace(['http://', 'https://'], '', $origin);
+        return $origin;
     }
 
     protected static function cache(bool $force = false)
     {
         try {
-            if ($force) {
-                self::forgetCache();
-                Cache::rememberForever('micro-services', function () {
-                    return self::runOnConnection(function () {
-                        return MicroServiceMap::get();
-                    }, config('microservice.db_connection_name'));
-                });
-            }
-            return Cache::has('micro-services') ? Cache::get('micro-services') : self::cache(true);
+            if ($force) self::forgetCache();
+
+            return Cache::rememberForever('micro-services', fn () => self::query()->get());
         } catch (Exception $exception) {
             abort(503, 'micro-service package is not installed yet or your configuration file is not configured yet. please run "php artisan vendor:publish" and "php artisan ms:install" commands and make sure that you set config file required values. Exception:' . $exception->getMessage());
         }
@@ -246,11 +228,6 @@ class MsHttp
         Artisan::call('config:cache');
     }
 
-    public static function decodeRequest(bool $establish = false)
-    {
-        return self::decodeRequestBody($establish);
-    }
-
     protected function encodeRequestBody(array $data, bool $establish = false)
     {
         return RequestEncryption::encrypt(
@@ -259,52 +236,33 @@ class MsHttp
         );
     }
 
-    protected static function decodeRequestBody(bool $establish = false)
+    public static function decodeRequest(bool $establish = false)
     {
         try {
             request_passed_ssl_configuration();
+
             $originMs = self::firstMsBy('origin', self::origin(true));
+
             if ((! $establish) && (! $originMs)) return false;
 
             $isDecrypted = RequestEncryption::decrypt(
                 request: request(),
                 key: (string) ($establish ? config('microservice.project_secret') : config('microservice.local_secret')),
             );
+
             if (! $isDecrypted) return false;
 
             if (! $establish) self::setCurrentRequestOriginMs($originMs);
+
             return true;
         } catch (Exception $exception) {
             return false;
         }
     }
 
-    protected static function currentDBConnection()
-    {
-        return DB::connection()->getPdo()?->getAttribute(\PDO::ATTR_DRIVER_NAME) ?? config('database.default');
-    }
-
     protected static function setCurrentRequestOriginMs(MicroServiceMap $originMs)
     {
         request()->currentRequestMs = $originMs;
-    }
-
-    protected static function setDBConnection(string|null $dbConnectionName = '')
-    {
-        switch (true) {
-            case $dbConnectionName != '' :
-                break;
-            case config('microservice.db_connection_name') != '' :
-                $dbConnectionName = config('microservice.db_connection_name');
-                break;
-            case config('database.default') != '' :
-                $dbConnectionName = config('database.default');
-                break;
-            default :
-                abort(503, 'wrong database connaction name');
-        }
-        DB::purge();
-        DB::setDefaultConnection($dbConnectionName);
     }
 
     public static function current()
@@ -314,7 +272,10 @@ class MsHttp
 
     public static function testingMicroservice()
     {
-        request()->currentRequestMs = App::environment('production') ? null : MicroServiceMap::first() ?? MicroServiceMap::factory()->create();
+        if (! App::environment(['local', 'testing'])) return null;
+
+        request()->currentRequestMs = self::query()->first() ?? MicroServiceMap::factory()->create();
+
         return request()->currentRequestMs;
     }
 }
