@@ -247,6 +247,11 @@ class MsHttp
         self::cache(true);
     }
 
+    public static function connectedServices()
+    {
+        return self::query()->has('token')->get();
+    }
+
     public static function updateOrigin(string $microserviceName, string $origin): bool
     {
         $updatedRowsCount = self::query()

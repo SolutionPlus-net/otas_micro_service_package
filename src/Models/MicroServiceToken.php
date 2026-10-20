@@ -63,4 +63,23 @@ class MicroServiceToken extends Model
         return null;
     }
 
+    // The current keys become the old keys, so requests the other service sends before it receives the new keys still work.
+    public function renewReceiveKeys(): array
+    {
+        $newReceiveKeys = [
+            'secret_key' => generate_key(),
+            'access_key' => generate_key(),
+        ];
+
+        $this->update([
+            'receive_secret_old_key' => $this->receive_secret_current_key,
+            'receive_secret_current_key' => $newReceiveKeys['secret_key'],
+
+            'receive_access_old_key' => $this->receive_access_current_key,
+            'receive_access_current_key' => $newReceiveKeys['access_key'],
+        ]);
+
+        return $newReceiveKeys;
+    }
+
 }

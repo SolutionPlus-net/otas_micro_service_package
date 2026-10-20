@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Otas\MicroService\Console\Commands\MicroServiceInstallCommand;
 use Otas\MicroService\Console\Commands\MicroServiceEstablishCommand;
 use Otas\MicroService\Console\Commands\MicroServiceUpdateOriginCommand;
+use Otas\MicroService\Console\Commands\MicroServiceRenewKeysCommand;
 
 class MicroServiceServiceProvider extends ServiceProvider
 {
@@ -47,6 +48,7 @@ class MicroServiceServiceProvider extends ServiceProvider
                 MicroServiceInstallCommand::class,
                 MicroServiceEstablishCommand::class,
                 MicroServiceUpdateOriginCommand::class,
+                MicroServiceRenewKeysCommand::class,
             ]);
 
             /**
