@@ -24,7 +24,7 @@ class MsHttpTest extends TestCase
         parent::setUp();
 
         DB::setDefaultConnection('microservice');
-        (include __DIR__ . '/../src/database/migrations/create_micro_service_maps_table.php.stub')->up();
+        $this->migratePackageTables();
         DB::setDefaultConnection('testing');
     }
 
@@ -33,7 +33,6 @@ class MsHttpTest extends TestCase
         MicroServiceMap::on('microservice')->create([
             'name' => 'tenant',
             'origin' => 'tenant.test',
-            'destination_key' => 'key',
         ]);
 
         MsHttp::refreshCache();

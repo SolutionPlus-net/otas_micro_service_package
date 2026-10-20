@@ -43,28 +43,37 @@ class RequestEncryption
 
     public static function decrypt(Request $request, string $key): bool
     {
-        $payload = self::decryptPayload($request, $key);
+        $data = self::decryptData(encryptedFields: $request->only(self::ENCRYPTED_FIELDS), key: $key);
 
-        if (! $payload) return false;
+        if ($data === null) return false;
 
-        if (self::isExpired($payload['sent_at'])) return false;
-
-        if (self::isReplayed($payload['nonce'])) return false;
-
-        self::replaceRequestData($request, $payload['data']);
+        self::replaceRequestData($request, $data);
 
         return true;
     }
 
-    private static function decryptPayload(Request $request, string $key): array|null
+    public static function decryptData(array $encryptedFields, string $key): array|null
     {
-        $iv = self::decodedField($request, 'ms_iv');
-        $tag = self::decodedField($request, 'ms_tag');
+        $payload = self::decryptPayload($encryptedFields, $key);
+
+        if (! $payload) return null;
+
+        if (self::isExpired($payload['sent_at'])) return null;
+
+        if (self::isReplayed($payload['nonce'])) return null;
+
+        return $payload['data'];
+    }
+
+    private static function decryptPayload(array $encryptedFields, string $key): array|null
+    {
+        $iv = self::decodedField($encryptedFields, 'ms_iv');
+        $tag = self::decodedField($encryptedFields, 'ms_tag');
 
         if (\strlen($iv) !== 12 || \strlen($tag) !== 16) return null;
 
         $json = \openssl_decrypt(
-            data: self::decodedField($request, 'ms_data'),
+            data: self::decodedField($encryptedFields, 'ms_data'),
             cipher_algo: self::CIPHER,
             passphrase: self::hashKey($key),
             options: OPENSSL_RAW_DATA,
@@ -98,9 +107,9 @@ class RequestEncryption
         $request->merge($data);
     }
 
-    private static function decodedField(Request $request, string $field): string
+    private static function decodedField(array $encryptedFields, string $field): string
     {
-        $value = $request->input($field);
+        $value = $encryptedFields[$field] ?? null;
 
         return \is_string($value) ? (string) \base64_decode($value, true) : '';
     }

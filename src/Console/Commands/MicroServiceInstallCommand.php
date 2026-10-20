@@ -38,15 +38,6 @@ class MicroServiceInstallCommand extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->envFile = App::environmentFilePath();
-        $this->envContent = \file_get_contents($this->envFile);
-        $this->envContent .= "\n";
-        $this->envKeys = [
-            'MS_SECURE_REQUESTS_ONLY' => $this->appendToEnvContent('MS_SECURE_REQUESTS_ONLY', 'true'),
-            'MS_GLOBAL_PROJECT_SECRET' => $this->appendToEnvContent('MS_GLOBAL_PROJECT_SECRET', ''),
-            'MS_LOCAL_SECRET' => $this->appendToEnvContent('MS_LOCAL_SECRET', '"' . generate_local_secret(16) . '"'),
-            'MS_DISABLE_PACKAGE_MIDDLEWARE' => $this->appendToEnvContent('MS_DISABLE_PACKAGE_MIDDLEWARE', 'true'),
-        ];
     }
 
     /**
@@ -56,6 +47,8 @@ class MicroServiceInstallCommand extends Command
      */
     public function handle()
     {
+        $this->prepareEnvContent();
+
         $this->info('Publishing configuration...');
 
         $this->publishConfiguration();
@@ -72,6 +65,19 @@ class MicroServiceInstallCommand extends Command
         $this->runMigration();
 
         return Command::SUCCESS;
+    }
+
+    // Kept out of the constructor: Laravel builds every command on each artisan call, even without a .env file.
+    private function prepareEnvContent(): void
+    {
+        $this->envFile = App::environmentFilePath();
+        $this->envContent = \file_get_contents($this->envFile);
+        $this->envContent .= "\n";
+        $this->envKeys = [
+            'MS_SECURE_REQUESTS_ONLY' => $this->appendToEnvContent('MS_SECURE_REQUESTS_ONLY', 'true'),
+            'MS_GLOBAL_PROJECT_SECRET' => $this->appendToEnvContent('MS_GLOBAL_PROJECT_SECRET', ''),
+            'MS_DISABLE_PACKAGE_MIDDLEWARE' => $this->appendToEnvContent('MS_DISABLE_PACKAGE_MIDDLEWARE', 'true'),
+        ];
     }
 
     private function appendToEnvContent(string $envKey, string $envKeyValue = ''): void

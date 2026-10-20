@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Otas\MicroService\Models\MicroServiceMap;
+use Otas\MicroService\Models\MicroServiceToken;
 
 class MicroServiceMapsTableSeeder extends Seeder
 {
@@ -14,6 +15,6 @@ class MicroServiceMapsTableSeeder extends Seeder
      */
     public function run()
     {
-        MicroServiceMap::factory()->create();
+        MicroServiceMap::factory()->has(MicroServiceToken::factory(), 'token')->create();
     }
 }

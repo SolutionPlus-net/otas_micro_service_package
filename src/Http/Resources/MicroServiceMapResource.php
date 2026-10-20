@@ -22,8 +22,6 @@ class MicroServiceMapResource extends JsonResource
 
             'origin' => $this->origin,
 
-            // 'destination_key' => $this->destination_key,
-
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

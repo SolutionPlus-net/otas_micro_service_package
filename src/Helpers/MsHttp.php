@@ -3,10 +3,10 @@
 namespace Otas\MicroService\Helpers;
 
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Artisan;
 use Otas\MicroService\Models\MicroServiceMap;
 
 class MsHttp
@@ -35,7 +35,9 @@ class MsHttp
 
         if (! $microService->origin) abort(503, 'can\'t find the selected service origin');
 
-        if (! $microService->destination_key) abort(503, 'can\'t find the selected service key');
+        $microService->load('token');
+
+        if (! $microService->token) abort(503, 'can\'t find the selected service keys. please run "php artisan ms:establish" again');
 
         return $microService;
     }
@@ -92,25 +94,40 @@ class MsHttp
 
     public static function establish(string $microserviceName, string $origin, int|null $localPort = null)
     {
-        if (self::firstMsBy('name', $microserviceName)) abort(503, 'service name already exists');
         if (config('microservice.micro_service_name') == '') abort(503, 'current service name is not set yet in "microservice" config file');
+
         if (config('microservice.project_secret') == '') abort(503, 'project secret is not set yet in "microservice" config file');
-        $data = [
-            'name' => config('microservice.micro_service_name'),
-            'origin' => self::origin(localPort: $localPort),
-            'secret' => config('microservice.local_secret'),
+
+        $receiveKeys = [
+            'secret_key' => generate_key(),
+            'access_key' => generate_key(),
         ];
+
         $response = self::send(
             method: 'post',
             microserviceName: $microserviceName,
             uri: 'micro-services',
-            data: $data,
+            data: [
+                'name' => config('microservice.micro_service_name'),
+                'origin' => self::origin(localPort: $localPort),
+                ...$receiveKeys,
+            ],
             origin: $origin
         );
 
-        if (isset(((object) $response->json())->secret)) {
-            self::saveMicroservice($microserviceName, $origin, ((object) $response->json())->secret);
-        }
+        if (! $response->ok()) return $response;
+
+        $sendKeys = RequestEncryption::decryptData(encryptedFields: (array) $response->json(), key: config('microservice.project_secret'));
+
+        if (! $sendKeys) abort(503, 'the other service response could not be decrypted');
+
+        self::saveMicroservice(
+            microserviceName: $microserviceName,
+            origin: $origin,
+            receiveKeys: $receiveKeys,
+            sendKeys: $sendKeys,
+        );
+
         return $response;
     }
 
@@ -139,23 +156,42 @@ class MsHttp
     // Runs on the package connection without changing the app's default connection (e.g. a tenant database).
     protected static function query()
     {
-        return MicroServiceMap::on(config('microservice.db_connection_name') ?: null);
+        return MicroServiceMap::on(self::connectionName());
     }
 
-    public static function saveMicroservice(string $microserviceName, string $origin, string $destinationKey)
+    protected static function connectionName()
     {
-        $microService = self::query()->updateOrCreate(
-            [
-                'origin' => $origin,
-                'name' => $microserviceName,
-            ],
-            [
-                'display_name' => \ucfirst(\str_replace(['_', '-'], ' ', $microserviceName)),
-                'destination_key' => $destinationKey,
-            ]
-        );
+        return config('microservice.db_connection_name') ?: null;
+    }
+
+    public static function saveMicroservice(string $microserviceName, string $origin, array $receiveKeys, array $sendKeys)
+    {
+        $microService = DB::connection(self::connectionName())->transaction(function () use ($microserviceName, $origin, $receiveKeys, $sendKeys) {
+            $microService = self::query()->updateOrCreate(
+                [
+                    'name' => $microserviceName,
+                ],
+                [
+                    'display_name' => \ucfirst(\str_replace(['_', '-'], ' ', $microserviceName)),
+                    'origin' => $origin,
+                ]
+            );
+
+            $microService->token()->updateOrCreate([], [
+                'receive_secret_old_key' => $receiveKeys['secret_key'],
+                'receive_secret_current_key' => $receiveKeys['secret_key'],
+                'send_secret_key' => $sendKeys['secret_key'],
+
+                'receive_access_old_key' => $receiveKeys['access_key'],
+                'receive_access_current_key' => $receiveKeys['access_key'],
+                'send_access_key' => $sendKeys['access_key'],
+            ]);
+
+            return $microService;
+        });
 
         self::cache(true);
+
         return $microService;
     }
 
@@ -204,35 +240,22 @@ class MsHttp
         self::cache(true);
     }
 
-    public static function announceSecretChange(string $secret): void
+    public static function updateOrigin(string $microserviceName, string $origin): bool
     {
-        self::cache()->each(function ($microservice) use ($secret) {
-            self::post(
-                microserviceName: $microservice->name,
-                uri: 'micro-services',
-                data: [
-                    'name' => config('microservice.micro_service_name'),
-                    'origin' => self::origin(),
-                    'secret' => $secret,
-                ],
-            );
-        });
-        
-        $envFile = App::environmentFilePath();
-        $envContent = \file_get_contents($envFile);
+        $updatedRowsCount = self::query()
+            ->where('name', $microserviceName)
+            ->update(['origin' => \str_replace(['http://', 'https://'], '', $origin)]);
 
-        $envContent = change_env_key_value(envContent: $envContent, envKey: 'MS_LOCAL_SECRET', envKeyValue: $secret);
+        self::cache(true);
 
-        \file_put_contents($envFile, $envContent);
-
-        Artisan::call('config:cache');
+        return $updatedRowsCount > 0;
     }
 
     protected function encodeRequestBody(array $data, bool $establish = false)
     {
         return RequestEncryption::encrypt(
             data: $data,
-            key: $establish ? config('microservice.project_secret') : $this->microservice->destination_key,
+            key: $establish ? config('microservice.project_secret') : $this->microservice->token->send_secret_key,
         );
     }
 
@@ -245,10 +268,9 @@ class MsHttp
 
             if ((! $establish) && (! $originMs)) return false;
 
-            $isDecrypted = RequestEncryption::decrypt(
-                request: request(),
-                key: (string) ($establish ? config('microservice.project_secret') : config('microservice.local_secret')),
-            );
+            $isDecrypted = $establish
+                ? RequestEncryption::decrypt(request: request(), key: (string) config('microservice.project_secret'))
+                : self::decryptWithReceiveKeys($originMs);
 
             if (! $isDecrypted) return false;
 
@@ -258,6 +280,22 @@ class MsHttp
         } catch (Exception $exception) {
             return false;
         }
+    }
+
+    protected static function decryptWithReceiveKeys(MicroServiceMap $originMs): bool
+    {
+        $token = $originMs->token()->first();
+
+        if (!$token) {
+            return false;
+        } 
+
+        if (RequestEncryption::decrypt(request: request(), key: $token->receive_secret_current_key)) {
+            return true;
+        } 
+
+        // The other service keeps sending with the old key until it receives the renewed one.
+        return RequestEncryption::decrypt(request: request(), key: $token->receive_secret_old_key);
     }
 
     protected static function setCurrentRequestOriginMs(MicroServiceMap $originMs)
