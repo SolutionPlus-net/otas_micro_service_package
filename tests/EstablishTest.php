@@ -34,6 +34,7 @@ class EstablishTest extends TestCase
         Http::fake([
             'tenant.test/api/micro-services' => function (Request $request) use (&$sentData, $tenantReceiveKeys) {
                 $sentData = RequestEncryption::decryptData(encryptedFields: $request->data(), key: self::PROJECT_SECRET);
+                $sentData['has_access_key_header'] = $request->hasHeader(MsHttp::ACCESS_KEY_HEADER);
 
                 return Http::response([
                     'message' => 'established',
@@ -43,6 +44,8 @@ class EstablishTest extends TestCase
         ]);
 
         $this->assertTrue(MsHttp::establish(microserviceName: 'tenant', origin: 'tenant.test')->ok());
+
+        $this->assertFalse($sentData['has_access_key_header']);
 
         $token = MicroServiceMap::where('name', 'tenant')->first()->token;
 

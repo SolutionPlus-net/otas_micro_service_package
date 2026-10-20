@@ -49,4 +49,18 @@ class MicroServiceToken extends Model
 
     ## Other Methods
 
+    // The access key tells which secret key encrypted the request: the current one, or the old one before a renewal.
+    public function receiveSecretKeyFor(string $accessKey): string|null
+    {
+        if (\hash_equals($this->receive_access_current_key, $accessKey)) {
+            return $this->receive_secret_current_key;
+        }
+
+        if (\hash_equals($this->receive_access_old_key, $accessKey)) {
+            return $this->receive_secret_old_key;
+        }
+
+        return null;
+    }
+
 }

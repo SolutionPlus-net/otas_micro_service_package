@@ -11,6 +11,8 @@ use Otas\MicroService\Models\MicroServiceMap;
 
 class MsHttp
 {
+    const ACCESS_KEY_HEADER = 'X-MS-Access-Key';
+
     public $headers;
     public $protocol;
     public $microservice;
@@ -141,7 +143,7 @@ class MsHttp
     ) {
         $http = new self($microserviceName, $origin);
         $establish = $origin != '';
-        return Http::withHeaders($http->headers($method, $additionalHeaders))
+        return Http::withHeaders($http->headers($method, $additionalHeaders, $establish))
             ->$method(
                 "{$http->protocol}{$http->microservice->origin}/api/{$uri}",
                 $http->encodeRequestBody($data, $establish)
@@ -195,7 +197,7 @@ class MsHttp
         return $microService;
     }
 
-    protected function headers(string $method = '', array $additionalHeaders = [])
+    protected function headers(string $method = '', array $additionalHeaders = [], bool $establish = false)
     {
         $headers = [
             'origin' => self::origin(),
@@ -203,6 +205,11 @@ class MsHttp
             'Authorization' => 'application/json',
         ];
         if ($method == 'put') $headers['_method'] = 'put';
+
+        if (! $establish) {
+            $headers[self::ACCESS_KEY_HEADER] = $this->microservice->token->send_access_key;
+        }
+
         return \array_merge($headers, $additionalHeaders);
     }
 
@@ -286,16 +293,18 @@ class MsHttp
     {
         $token = $originMs->token()->first();
 
-        if (!$token) {
+        if (! $token) {
             return false;
-        } 
+        }
 
-        if (RequestEncryption::decrypt(request: request(), key: $token->receive_secret_current_key)) {
-            return true;
-        } 
+        // Checked before decrypting, so a request without a valid access key never costs any decryption.
+        $secretKey = $token->receiveSecretKeyFor(accessKey: (string) request()->header(self::ACCESS_KEY_HEADER));
 
-        // The other service keeps sending with the old key until it receives the renewed one.
-        return RequestEncryption::decrypt(request: request(), key: $token->receive_secret_old_key);
+        if (! $secretKey) {
+            return false;
+        }
+
+        return RequestEncryption::decrypt(request: request(), key: $secretKey);
     }
 
     protected static function setCurrentRequestOriginMs(MicroServiceMap $originMs)
