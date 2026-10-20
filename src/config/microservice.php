@@ -111,4 +111,17 @@ return [
 
     'disable_package_middleware' => env('MS_DISABLE_PACKAGE_MIDDLEWARE'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Request lifetime
+    |--------------------------------------------------------------------------
+    |
+    | Here you can set how many seconds an encrypted request stays valid after
+    | it was sent. Older requests are rejected, so a recorded request can't
+    | be sent again later. The default value is 120 seconds.
+    |
+    */
+
+    'request_expires_after_seconds' => 120,
+
 ];

@@ -13,7 +13,6 @@ use Otas\MicroService\Models\MicroServiceMap;
 
 class MsHttp
 {
-    public $cipher;
     public $headers;
     public $protocol;
     public $microservice;
@@ -21,7 +20,6 @@ class MsHttp
 
     protected function __construct(string $microserviceName, string $origin = '')
     {
-        $this->cipher = 'aes-256-cbc';
         $this->microserviceName = $microserviceName;
         $this->microservice = $origin == '' ? $this->destinationMicroService($microserviceName) : new MicroServiceMap([
             'name' => \strtolower($microserviceName),
@@ -255,16 +253,10 @@ class MsHttp
 
     protected function encodeRequestBody(array $data, bool $establish = false)
     {
-        $payload = \base64_encode(\json_encode($data));
-        return [
-            0 => \openssl_encrypt(
-                \serialize($payload),
-                $this->cipher,
-                '',
-                0,
-                $establish ? config('microservice.project_secret') : $this->microservice->destination_key
-            ),
-        ];
+        return RequestEncryption::encrypt(
+            data: $data,
+            key: $establish ? config('microservice.project_secret') : $this->microservice->destination_key,
+        );
     }
 
     protected static function decodeRequestBody(bool $establish = false)
@@ -274,16 +266,12 @@ class MsHttp
             $originMs = self::firstMsBy('origin', self::origin(true));
             if ((! $establish) && (! $originMs)) return false;
 
-            $decrypted = \openssl_decrypt(
-                request()->all()[0],
-                'aes-256-cbc',
-                '',
-                0,
-                $establish ? config('microservice.project_secret') : config('microservice.local_secret')
+            $isDecrypted = RequestEncryption::decrypt(
+                request: request(),
+                key: (string) ($establish ? config('microservice.project_secret') : config('microservice.local_secret')),
             );
-            $unSerialized = \unserialize($decrypted);
-            request()->merge((array) \json_decode(\base64_decode($unSerialized), true));
-            request()->isMethod('get') ? request()->query->remove('0') : request()->request->remove('0');
+            if (! $isDecrypted) return false;
+
             if (! $establish) self::setCurrentRequestOriginMs($originMs);
             return true;
         } catch (Exception $exception) {
