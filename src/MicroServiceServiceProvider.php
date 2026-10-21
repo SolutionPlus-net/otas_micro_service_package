@@ -7,11 +7,15 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Otas\MicroService\Console\Commands\MicroServiceInstallCommand;
 use Otas\MicroService\Console\Commands\MicroServiceEstablishCommand;
+use Otas\MicroService\Console\Commands\MicroServiceUpdateOriginCommand;
+use Otas\MicroService\Console\Commands\MicroServiceRenewKeysCommand;
 
 class MicroServiceServiceProvider extends ServiceProvider
 {
     private array $packageMigrations = [
         'create_micro_service_maps_table',
+        'create_microservice_tokens_table',
+        'drop_destination_key_from_micro_service_maps_table',
     ];
 
     private string $migrationSubFolder;
@@ -43,6 +47,8 @@ class MicroServiceServiceProvider extends ServiceProvider
             $this->commands([
                 MicroServiceInstallCommand::class,
                 MicroServiceEstablishCommand::class,
+                MicroServiceUpdateOriginCommand::class,
+                MicroServiceRenewKeysCommand::class,
             ]);
 
             /**

@@ -16,13 +16,16 @@ class MicroServiceMap extends Model
 
         'origin',
 
-        'destination_key',
-
         'created_at',
         'updated_at',
     ];
 
     ## Relations
+
+    public function token()
+    {
+        return $this->hasOne(MicroServiceToken::class);
+    }
 
     ## Getters & Setters
 

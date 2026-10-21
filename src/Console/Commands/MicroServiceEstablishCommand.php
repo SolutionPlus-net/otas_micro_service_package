@@ -3,7 +3,7 @@
 namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Actions\EstablishConnectionAction;
 
 class MicroServiceEstablishCommand extends Command
 {
@@ -47,7 +47,11 @@ class MicroServiceEstablishCommand extends Command
             return Command::FAILURE;
         }
 
-        $response = MsHttp::establish($destinationMicroserviceName, $destinationMicroserviceOrigin, $localMicroserviceLocalPort);
+        $response = EstablishConnectionAction::handle(
+            microserviceName: $destinationMicroserviceName,
+            origin: $destinationMicroserviceOrigin,
+            localPort: $localMicroserviceLocalPort,
+        );
 
         if (! $response->ok()) {
             $this->warn('Failed to establish. response_status_code:' . $response->status() . ', response_body: ' . $response->body());
