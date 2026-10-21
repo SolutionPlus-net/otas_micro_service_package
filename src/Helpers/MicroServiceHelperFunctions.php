@@ -2,17 +2,10 @@
 
 use Illuminate\Support\Facades\Log;
 
-if (! function_exists('generate_local_secret')) {
-    function generate_local_secret($length = 10, $intOnly = false, $prefix = null) {
-        if (\strlen($prefix) > $length) abort(500, 'wrong helper function usage from backend');
-
-        $characters = $intOnly ? '0123456789' : '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = \strlen($characters);
-        $serial = '';
-        for ($i = 0; $i < ($length - \strlen($prefix)); $i++) {
-            $serial .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return "{$prefix}{$serial}";
+if (! function_exists('generate_key')) {
+    function generate_key(): string
+    {
+        return \base64_encode(\random_bytes(32));
     }
 }
 

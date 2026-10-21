@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Otas\MicroService\Models\MicroServiceMap;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Invoice>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Otas\MicroService\Models\MicroServiceMap>
  */
 class MicroServiceMapFactory extends Factory
 {
@@ -23,10 +23,9 @@ class MicroServiceMapFactory extends Factory
         $name = $this->faker->words(2, true);
 
         return [
-            'name' => Str::slug('_', $name),
+            'name' => Str::slug($name, '_'),
             'display_name' => \ucfirst($name),
-            'origin' => 'http://localhost:8001',
-            'destination_key' => $this->faker->numberBetween(100000000, 999999999),
+            'origin' => 'localhost:8001',
         ];
     }
 }

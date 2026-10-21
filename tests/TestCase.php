@@ -2,25 +2,26 @@
 
 namespace Otas\MicroService\Tests;
 
-use Otas\MicroService\PermissionServiceProvider;
+use Otas\MicroService\MicroServiceServiceProvider;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
-  public function setUp(): void
-  {
-    parent::setUp();
-    // additional setup
-  }
+    protected function getPackageProviders($app)
+    {
+        return [
+            MicroServiceServiceProvider::class,
+        ];
+    }
 
-  protected function getPackageProviders($app)
-  {
-    return [
-        PermissionServiceProvider::class,
-    ];
-  }
+    protected function migratePackageTables(): void
+    {
+        foreach (['create_micro_service_maps_table', 'create_microservice_tokens_table'] as $migrationName) {
+            $this->runPackageMigration($migrationName);
+        }
+    }
 
-  protected function getEnvironmentSetUp($app)
-  {
-    // perform environment setup
-  }
+    protected function runPackageMigration(string $migrationName, string $direction = 'up'): void
+    {
+        (include __DIR__ . "/../src/database/migrations/{$migrationName}.php.stub")->{$direction}();
+    }
 }

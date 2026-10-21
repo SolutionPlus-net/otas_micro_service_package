@@ -4,7 +4,7 @@ namespace Otas\MicroService\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Otas\MicroService\Helpers\MsHttp;
+use Otas\MicroService\Actions\DecodeRequestAction;
 
 class MicroServiceEstablishConnectionMiddleware
 {
@@ -17,7 +17,7 @@ class MicroServiceEstablishConnectionMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (! MsHttp::decodeRequest(true)) abort(405, 'forbidden action');
+        if (! DecodeRequestAction::handle(establish: true)) abort(405, 'forbidden action');
 
         return $next($request);
     }
