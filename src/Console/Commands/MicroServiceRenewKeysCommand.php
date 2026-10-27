@@ -3,8 +3,9 @@
 namespace Otas\MicroService\Console\Commands;
 
 use Illuminate\Console\Command;
-use Otas\MicroService\Services\MicroServiceMapService;
 use Otas\MicroService\Jobs\RenewKeysJob;
+use Otas\MicroService\Models\MicroServiceMap;
+use Otas\MicroService\Services\MicroServiceMapService;
 
 class MicroServiceRenewKeysCommand extends Command
 {
@@ -29,7 +30,8 @@ class MicroServiceRenewKeysCommand extends Command
      */
     public function handle()
     {
-        $connectedServices = MicroServiceMapService::connectedServices();
+        $connectedServices = MicroServiceMapService::connectedServices()
+            ->reject(fn (MicroServiceMap $connectedService) => RenewKeysJob::isRetrying($connectedService));
 
         foreach ($connectedServices as $connectedService) {
             RenewKeysJob::dispatch($connectedService);
