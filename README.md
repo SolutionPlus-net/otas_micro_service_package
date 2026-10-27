@@ -124,7 +124,9 @@ $schedule->command('ms:renew-keys')->everyThirtyMinutes()->onOneServer();
 * The command queues one job for each connected service, so a queue worker must be running.
 * `onOneServer()` needs a shared cache driver (redis, database ...etc) if the app runs on more than one server.
 * The old keys keep working until the next renewal, so requests that are already on their way don't fail.
-* If sending the new keys to the other service fails, nothing breaks: the other service keeps using the old keys and the next renewal sends newer ones. The failed job shows the reason in `failed_jobs`.
+* If sending the new keys fails, the job sends the **same** keys again after 1, 2, 5, 10 and 15 minutes. Every failed attempt shows the reason in `failed_jobs`.
+* While those retries are running, `ms:renew-keys` doesn't renew that service, because a new renewal would drop the old keys the other service still uses.
+* If every retry fails, the next scheduled run renews as usual, and the other service can't reach this one until a renewal reaches it. If both services kept failing to reach each other, run `ms:establish` once both are back.
 
 ## When a service origin changes
 
